@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Reconciliation Tool</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- External libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Investment Reconciliation Tool</h1>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="upload">Upload Files</div>
+      <div class="tab" data-tab="extract">Extract Data</div>
+      <div class="tab" data-tab="reconciliation">Reconciliation</div>
+      <div class="tab" data-tab="entries">Journal Entries</div>
+      <div class="tab" data-tab="report">Report</div>
+    </div>
+    
+    <div id="upload" class="tab-content active">
+      <h2>Upload Investment Files</h2>
+      <p>Upload your Excel GL file and Edward Jones PDF statement to begin the reconciliation process.</p>
+      
+      <div class="two-column">
+        <div class="column">
+          <div class="card">
+            <div class="card-header">Excel General Ledger File</div>
+            <div class="card-body">
+              <div class="file-upload" id="excel-upload-area">
+                <div class="file-upload-icon">📊</div>
+                <label class="file-upload-label">
+                  Click or drag Excel file here
+                  <input type="file" id="excel-file" accept=".xlsx,.xls">
+                </label>
+                <p>Upload your GL Excel file containing investment account data</p>
+                <div class="file-info" id="excel-file-info"></div>
+              </div>
+              
+              <div class="preview-section hidden" id="excel-preview-section">
+                <h4>Excel Preview</h4>
+                <pre id="excel-preview"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column">
+          <div class="card">
+            <div class="card-header">Edward Jones PDF Statement</div>
+            <div class="card-body">
+              <div class="file-upload" id="pdf-upload-area">
+                <div class="file-upload-icon">📄</div>
+                <label class="file-upload-label">
+                  Click or drag PDF file here
+                  <input type="file" id="pdf-file" accept=".pdf">
+                </label>
+                <p>Upload your Edward Jones statement in PDF format</p>
+                <div class="file-info" id="pdf-file-info"></div>
+              </div>
+              
+              <div class="preview-section hidden" id="pdf-preview-section">
+                <h4>PDF Preview</h4>
+                <pre id="pdf-preview"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button id="continue-to-extraction" disabled>Continue to Data Extraction</button>
+      <button id="load-sample-data">Load Sample Data</button>
+    </div>
+    
+    <div id="extract" class="tab-content">
+      <h2>Extract Data from Files</h2>
+      
+      <div class="two-column">
+        <div class="column">
+          <div class="card">
+            <div class="card-header">General Ledger Data</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="gl-account">GL Account Number:</label>
+                <input type="text" id="gl-account" placeholder="GL Account Number">
+              </div>
+              
+              <div class="form-group">
+                <label for="gl-account-name">GL Account Name:</label>
+                <input type="text" id="gl-account-name" placeholder="GL Account Name">
+              </div>
+              
+              <div class="form-group">
+                <label for="gl-balance-date">GL Balance Date:</label>
+                <input type="date" id="gl-balance-date">
+              </div>
+              
+              <div class="form-group">
+                <label for="gl-balance">GL Balance:</label>
+                <input type="number" id="gl-balance" step="0.01" placeholder="GL Balance">
+              </div>
+              
+              <div class="form-group">
+                <label for="dividend-account">Dividend Income Account:</label>
+                <input type="text" id="dividend-account" placeholder="Dividend Income Account">
+              </div>
+              
+              <div class="form-group">
+                <label for="unrealized-account">Unrealized Gains/Losses Account:</label>
+                <input type="text" id="unrealized-account" placeholder="Unrealized Gains/Losses Account">
+              </div>
+              
+              <p class="mt-3">
+                <strong>Extracted GL Data Preview:</strong>
+              </p>
+              <div class="preview-section">
+                <pre id="gl-data-preview">Account data will appear here after extraction</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column">
+          <div class="card">
+            <div class="card-header">Statement Data</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="stmt-account">Statement Account Number:</label>
+                <input type="text" id="stmt-account" placeholder="Statement Account Number">
+              </div>
+              
+              <div class="form-group">
+                <label for="stmt-begin-date">Beginning Date:</label>
+                <input type="date" id="stmt-begin-date">
+              </div>
+              
+              <div class="form-group">
+                <label for="stmt-end-date">Ending Date:</label>
+                <input type="date" id="stmt-end-date">
+              </div>
+              
+              <div class="form-group">
+                <label for="stmt-begin-balance">Beginning Balance:</label>
+                <input type="number" id="stmt-begin-balance" step="0.01" placeholder="Beginning Balance">
+              </div>
+              
+              <div class="form-group">
+                <label for="stmt-end-balance">Ending Balance:</label>
+                <input type="number" id="stmt-end-balance" step="0.01" placeholder="Ending Balance">
+              </div>
+              
+              <div class="form-group">
+                <label for="dividend-income">Dividend Income:</label>
+                <input type="number" id="dividend-income" step="0.01" placeholder="Dividend Income">
+              </div>
+              
+              <div class="form-group">
+                <label for="unrealized-gain-loss">Unrealized Gain/Loss:</label>
+                <input type="number" id="unrealized-gain-loss" step="0.01" placeholder="Unrealized Gain/Loss">
+              </div>
+              
+              <p class="mt-3">
+                <strong>Extracted Statement Data Preview:</strong>
+              </p>
+              <div class="preview-section">
+                <pre id="statement-data-preview">Statement data will appear here after extraction</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button id="perform-reconciliation" disabled>Perform Reconciliation</button>
+      <button id="extract-data">Extract Data from Files</button>
+    </div>
+    
+    <div id="reconciliation" class="tab-content">
+      <h2>Reconciliation Results</h2>
+      
+      <div class="card">
+        <div class="card-header">Reconciliation Summary</div>
+        <div class="card-body">
+          <table>
+            <tr>
+              <td>GL Balance as of <span id="recon-gl-date">February 28, 2025</span></td>
+              <td class="text-right" id="recon-gl-balance">$0.00</td>
+            </tr>
+            <tr>
+              <td>Add: Dividend Income</td>
+              <td class="text-right" id="recon-dividend-income">$0.00</td>
+            </tr>
+            <tr>
+              <td>Less: Unrealized Loss</td>
+              <td class="text-right" id="recon-unrealized-loss">$0.00</td>
+            </tr>
+            <tr>
+              <td>Less: Dividend Reinvestment</td>
+              <td class="text-right" id="recon-dividend-reinvest">$0.00</td>
+            </tr>
+            <tr class="total-row">
+              <td>GL Balance after adjustments</td>
+              <td class="text-right" id="recon-adjusted-balance">$0.00</td>
+            </tr>
+            <tr>
+              <td>Edward Jones Statement Balance</td>
+              <td class="text-right" id="recon-stmt-balance">$0.00</td>
+            </tr>
+            <tr>
+              <td>Difference</td>
+              <td class="text-right" id="recon-difference">$0.00</td>
+            </tr>
+            <tr>
+              <td>Status</td>
+              <td class="text-right" id="recon-status"></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Dividend Transactions</div>
+        <div class="card-body">
+          <table id="dividend-transactions">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamically generated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <button id="generate-journal-entries" disabled>Generate Journal Entries</button>
+      <button id="recalculate-reconciliation">Recalculate</button>
+    </div>
+    
+    <div id="entries" class="tab-content">
+      <h2>Journal Entries</h2>
+      
+      <div id="journal-entries-container">
+        <!-- Dynamically generated journal entries will go here -->
+      </div>
+      
+      <button id="generate-report" disabled>Generate Final Report</button>
+      <button id="export-entries">Export Journal Entries</button>
+    </div>
+    
+    <div id="report" class="tab-content">
+      <h2>Investment Reconciliation Report</h2>
+      
+      <div class="card">
+        <div class="card-header">Portfolio Composition</div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="portfolioChart"></canvas>
+          </div>
+          
+          <table id="portfolio-composition">
+            <thead>
+              <tr>
+                <th>Investment</th>
+                <th class="text-right">Value</th>
+                <th class="text-right">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamically generated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">Performance Summary</div>
+        <div class="card-body">
+          <table id="performance-summary">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th class="text-right">Rate of Return</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamically generated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <button id="generate-pdf">Generate PDF Report</button>
+      <button id="export-excel">Export to Excel</button>
+      <button id="start-new-reconciliation">Start New Reconciliation</button>
+    </div>
+    
+    <div class="footer">
+      <p>Investment Reconciliation Tool v1.0 | Generated on May 21, 2025</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
